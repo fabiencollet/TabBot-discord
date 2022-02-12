@@ -15,8 +15,6 @@ import ranking
 ################################################################################
 
 
-
-
 class MyClient(discord.Client):
 
     async def on_ready(self):
@@ -44,8 +42,28 @@ class MyClient(discord.Client):
             await theme_msg.add_reaction(emoji)
 
         self.loop.create_task(self.check_reward_experience())
-
+        self.loop.create_task(self.check_entrance())
         ########################################################################
+
+    async def check_entrance(self):
+        while True:
+            for member in self.get_all_members():
+
+                if member.top_role.id in config.LIST_ROLE_MODERATOR_IDS:
+                    continue
+
+                if member.top_role.id not in config.LIST_ROLE_CLIENTS_IDS:
+                    la_carte: discord.TextChannel = self.get_channel(
+                        config.CHANNEL_LA_CARTE_ID)
+
+                    msg = f"\n:robot: Biiiip bip bip biiip, Nouveau client detecter à l'entrée du Café :robot: \n" \
+                          f"Il semblerait que tu n'ais pas réussi à ouvrir la porte d'entrée, elle est un peu vielle et se bloque constament.\n" \
+                          f"Pour ce faire il te suffit d'aller dans le channel {la_carte.mention} de lire les régles et réagir au message en cliquant sur la réaction :white_check_mark: pour les accepter, " \
+                          f"ainsi tu pourras rentrer à l'intérieur et découvrir les Informations, Expositions, Magazines et la Bibliothéque du Café"
+
+                    await member.send(content=msg)
+
+            await asyncio.sleep(60*60*6)
 
     async def check_reward_experience(self):
 
@@ -102,19 +120,26 @@ class MyClient(discord.Client):
                               f"l'equipe à le plaisir de t'offrir un **{new_role}** ! Merci Beaucoup :coffee: "
                     await member.guild.system_channel.send(to_send)
 
-            await asyncio.sleep(60)
+            await asyncio.sleep(60*15)
 
     async def on_member_join(self, member: discord.Member):
         guild: discord.Guild = member.guild
 
-        msg = f"""Bienvenue {member.display_name} sur le serveur {guild.name}
-              🙂 \n Pense a bien lire les régles et a réagir au message en 
-              cliquant sur la réactions :white_check_mark: pour les accepter
-              ainsi tu auras accès au catégories Informations, Expositions, 
-              Magazines et Bibliothéque. \n
-              Pense aussi à réagir au message pour choisir les thêmes qui
-              t'interesse, tu auras ainsi accès au espaces Studios pour"
-              approfondir les thêmes qui t'intéresse."""
+        la_carte: discord.TextChannel = self.get_channel(
+            config.CHANNEL_LA_CARTE_ID)
+
+        msg = f"""Bienvenue {member.display_name} sur le serveur {guild.name}🙂 \n
+Pense à bien lire les régles et réagir au message en cliquant sur la réaction :white_check_mark: pour les accepter, ainsi tu auras accès au catégories Informations, Expositions, Magazines et Bibliothéque. \n
+Pense aussi à choisir les thêmes qui t'interesse :
+🎨  =  2D
+💻  =  3D
+🎮   =  Jeux
+📷   =  Photo
+🎥   =  Vidéo
+🎵   =  Musique
+🛠️   =  DIY
+✍️   =  Écriture
+en réagissant au message dans le channel {la_carte.mention}, tu auras ainsi accès au espaces Studios pour approfondir les thêmes qui t'intéresse."""
 
         await member.send(content=msg)
 
