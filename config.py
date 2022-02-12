@@ -10,6 +10,9 @@ load_dotenv(".config")
 
 TOKEN = os.getenv("TOKEN")
 
+# Guild
+GUILD_ID = int(os.getenv("GUILD_ID"))
+
 # CHANNELS
 CHANNEL_LA_CARTE_ID = int(os.getenv("CHANNEL_LA_CARTE_ID"))
 
@@ -79,6 +82,11 @@ XP_RANK_CAPPUCCINO = int(os.getenv("XP_RANK_CAPPUCCINO"))
 XP_RANK_MACHIATTO = int(os.getenv("XP_RANK_MACHIATTO"))
 XP_RANK_MACHIATTO_LATTE = int(os.getenv("XP_RANK_MACHIATTO_LATTE"))
 XP_RANK_IRISH_COFFEE = int(os.getenv("XP_RANK_IRISH_COFFEE"))
+
+# Database
+DATABASE_MEMBER_XP = os.getenv("DATABASE_MEMBER_XP")
+DATABASE_MEMBER_XP_BACKUP = os.getenv("DATABASE_MEMBER_XP_BACKUP")
+PATH_FOLDER_BACKUP_XP = os.getenv("PATH_FOLDER_BACKUP_XP")
 
 ################################################################################
 # List

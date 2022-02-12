@@ -1,5 +1,7 @@
 import asyncio
 import datetime
+import os
+import shutil
 
 import discord
 import sqlite_utils
@@ -20,7 +22,7 @@ class MyClient(discord.Client):
     async def on_ready(self):
 
         # Init database
-        database = sqlite_utils.Database("members_xp.db")
+        database = sqlite_utils.Database(config.DATABASE_MEMBER_XP)
         members_table = database["members"]
         for member in self.get_all_members():
             members_table.insert({
@@ -29,9 +31,14 @@ class MyClient(discord.Client):
                 "xp": 0,
             }, pk="id", ignore=True)
 
-        print('Logged in as')
-        print(self.user.name)
-        print('------')
+        guild: discord.Guild = self.get_guild(config.GUILD_ID)
+
+        if guild.system_channel is not None:
+            msg = f":robot: Biiip...bip..bip.........bip\n" \
+                  f"\\> start in progress.....\n" \
+                  f"\\> Bonjour à tous, j'ai bien dormi mon Firmware est à jour!"
+
+            await guild.system_channel.send(msg)
 
         # TabBot React to all themes
         la_carte_channel = self.get_channel(config.CHANNEL_LA_CARTE_ID)
@@ -43,7 +50,39 @@ class MyClient(discord.Client):
 
         self.loop.create_task(self.check_reward_experience())
         self.loop.create_task(self.check_entrance())
+        self.loop.create_task(self.back_up_xp())
         ########################################################################
+
+    async def on_disconnect(self):
+
+        print("Disconnected")
+
+        # Send Message into La Gazette for celebrating the new Role
+        guild: discord.Guild = self.get_guild(config.GUILD_ID)
+
+        if guild.system_channel is not None:
+            msg = f":robot: Biiip...bip..bip.........bip\n" \
+                  f"\\> Je suis Fatigué je vais dormir !\n" \
+                  f"\\> shutdown in progress....."
+
+            await guild.system_channel.send(msg)
+
+    async def back_up_xp(self):
+        while True:
+
+            if not os.path.exists(config.PATH_FOLDER_BACKUP_XP):
+                os.mkdir(config.PATH_FOLDER_BACKUP_XP)
+
+            backup_filepath = os.path.join(config.PATH_FOLDER_BACKUP_XP,
+                                           config.DATABASE_MEMBER_XP_BACKUP)
+
+            if os.path.exists(backup_filepath):
+                os.remove(backup_filepath)
+
+            shutil.copy(config.DATABASE_MEMBER_XP,
+                        backup_filepath)
+
+            await asyncio.sleep(60 * 60 * 24 * 2)
 
     async def check_entrance(self):
         while True:
@@ -68,7 +107,7 @@ class MyClient(discord.Client):
     async def check_reward_experience(self):
 
         while True:
-            database = sqlite_utils.Database("members_xp.db")
+            database = sqlite_utils.Database(config.DATABASE_MEMBER_XP)
 
             for member in self.get_all_members():
 
@@ -116,9 +155,9 @@ class MyClient(discord.Client):
 
                 # Send Message into La Gazette for celebrating the new Role
                 if member.guild.system_channel is not None:
-                    to_send = f"Pour tous ces jours passer avec nous dans ce café et ton implications **{member.mention}**,\n" \
-                              f"l'equipe à le plaisir de t'offrir un **{new_role}** ! Merci Beaucoup :coffee: "
-                    await member.guild.system_channel.send(to_send)
+                    msg = f"Pour tous ces jours passer avec nous dans ce café et ton implications **{member.mention}**,\n" \
+                          f"l'equipe à le plaisir de t'offrir un **{new_role}** ! Merci Beaucoup :coffee: "
+                    await member.guild.system_channel.send(msg)
 
             await asyncio.sleep(60*15)
 
@@ -143,7 +182,7 @@ en réagissant au message dans le channel {la_carte.mention}, tu auras ainsi acc
 
         await member.send(content=msg)
 
-        database = sqlite_utils.Database("members_xp.db")
+        database = sqlite_utils.Database(config.DATABASE_MEMBER_XP)
         members_table = database["members"]
         members_table.insert({
             "id": member.id,
