@@ -67,26 +67,25 @@ def get_points_for_message_in_channel(channel: discord.TextChannel):
 
 def add_point_to(member: discord.Member,
                  points: int):
-    name = member.name
 
     # Get database xp
-    database = sqlite_utils.Database("members_xp.db")
-    current_dict = database["members"].get(member.id)
-    current_xp = current_dict["xp"]
+    database = sqlite_utils.Database(config.DATABASE_MEMBER_XP)
+    current_dict = database[config.DATABASE_TABLE_XP].get(member.id)
+    current_xp = current_dict[config.DATABASE_ROW_XP]
 
     # Update database xp
-    database["members"].update(member.id, {"xp": current_xp + points})
+    database[config.DATABASE_TABLE_XP].update(member.id,
+                                              {config.DATABASE_ROW_XP: current_xp + points})
 
 
 def remove_point_to(member: discord.Member,
                     points: int):
 
-    name = member.name
-
     # Get database xp
-    database = sqlite_utils.Database("members_xp.db")
-    current_dict = database["members"].get(member.id)
-    current_xp = current_dict["xp"]
+    database = sqlite_utils.Database(config.DATABASE_MEMBER_XP)
+    current_dict = database[config.DATABASE_TABLE_XP].get(member.id)
+    current_xp = current_dict[config.DATABASE_ROW_XP]
 
     # Update database xp
-    database["members"].update(member.id, {"xp": current_xp - points})
+    database[config.DATABASE_TABLE_XP].update(member.id,
+                                              {config.DATABASE_ROW_XP: current_xp - points})

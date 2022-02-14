@@ -111,6 +111,7 @@ env.bak/
 venv.bak/
 config
 .config
+.config_online
 
 # Spyder project settings
 .spyderproject

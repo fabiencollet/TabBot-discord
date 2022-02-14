@@ -86,6 +86,10 @@ XP_RANK_IRISH_COFFEE = int(os.getenv("XP_RANK_IRISH_COFFEE"))
 # Database
 DATABASE_MEMBER_XP = os.getenv("DATABASE_MEMBER_XP")
 DATABASE_MEMBER_XP_BACKUP = os.getenv("DATABASE_MEMBER_XP_BACKUP")
+
+DATABASE_TABLE_XP = os.getenv("DATABASE_TABLE_XP")
+DATABASE_ROW_XP = os.getenv("DATABASE_ROW_XP")
+
 PATH_FOLDER_BACKUP_XP = os.getenv("PATH_FOLDER_BACKUP_XP")
 
 ################################################################################

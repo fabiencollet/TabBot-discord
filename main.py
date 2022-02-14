@@ -13,7 +13,6 @@ import ranking
 ################################################################################
 # Globals
 
-
 ################################################################################
 
 
@@ -35,8 +34,8 @@ class MyClient(discord.Client):
 
         if guild.system_channel is not None:
             msg = f":robot: Biiip...bip..bip.........bip\n" \
-                  f"\\> start in progress.....\n" \
-                  f"\\> Bonjour à tous, j'ai bien dormi mon Firmware est à jour!"
+                  f"\\> Démarrage en cours.....\n" \
+                  f"\\> J'ai bien dormi mon Firmware est à jour!"
 
             await guild.system_channel.send(msg)
 
@@ -52,20 +51,6 @@ class MyClient(discord.Client):
         self.loop.create_task(self.check_entrance())
         self.loop.create_task(self.back_up_xp())
         ########################################################################
-
-    async def on_disconnect(self):
-
-        print("Disconnected")
-
-        # Send Message into La Gazette for celebrating the new Role
-        guild: discord.Guild = self.get_guild(config.GUILD_ID)
-
-        if guild.system_channel is not None:
-            msg = f":robot: Biiip...bip..bip.........bip\n" \
-                  f"\\> Je suis Fatigué je vais dormir !\n" \
-                  f"\\> shutdown in progress....."
-
-            await guild.system_channel.send(msg)
 
     async def back_up_xp(self):
         while True:
@@ -88,21 +73,29 @@ class MyClient(discord.Client):
         while True:
             for member in self.get_all_members():
 
+                member: discord.Member
+
                 if member.top_role.id in config.LIST_ROLE_MODERATOR_IDS:
                     continue
 
-                if member.top_role.id not in config.LIST_ROLE_CLIENTS_IDS:
-                    la_carte: discord.TextChannel = self.get_channel(
-                        config.CHANNEL_LA_CARTE_ID)
+                chose_theme = False
+
+                for role in member.roles:
+                    if role.id in config.LIST_ROLE_THEMES_IDS:
+                        chose_theme = True
+                        break
+
+                if not chose_theme:
+
+                    la_carte = self.get_channel(config.CHANNEL_LA_CARTE_ID)
 
                     msg = f"\n:robot: Biiiip bip bip biiip, Nouveau client detecter à l'entrée du Café :robot: \n" \
-                          f"Il semblerait que tu n'ais pas réussi à ouvrir la porte d'entrée, elle est un peu vielle et se bloque constament.\n" \
-                          f"Pour ce faire il te suffit d'aller dans le channel {la_carte.mention} de lire les régles et réagir au message en cliquant sur la réaction :white_check_mark: pour les accepter, " \
-                          f"ainsi tu pourras rentrer à l'intérieur et découvrir les Informations, Expositions, Magazines et la Bibliothéque du Café"
+                          f"Il semblerait que tu n'ais pas encore choisi de thême.\n" \
+                          f"Pour ce faire il te suffit d'aller dans le channel {la_carte.mention} et de réagir au thêmes qui t'interesse"
 
                     await member.send(content=msg)
 
-            await asyncio.sleep(60*60*6)
+            await asyncio.sleep(60*60*24*12)
 
     async def check_reward_experience(self):
 
@@ -168,8 +161,7 @@ class MyClient(discord.Client):
             config.CHANNEL_LA_CARTE_ID)
 
         msg = f"""Bienvenue {member.display_name} sur le serveur {guild.name}🙂 \n
-Pense à bien lire les régles et réagir au message en cliquant sur la réaction :white_check_mark: pour les accepter, ainsi tu auras accès au catégories Informations, Expositions, Magazines et Bibliothéque. \n
-Pense aussi à choisir les thêmes qui t'interesse :
+Pense à choisir les thêmes qui t'interesse :
 🎨  =  2D
 💻  =  3D
 🎮   =  Jeux
@@ -182,13 +174,24 @@ en réagissant au message dans le channel {la_carte.mention}, tu auras ainsi acc
 
         await member.send(content=msg)
 
+        # Create column member in Database
         database = sqlite_utils.Database(config.DATABASE_MEMBER_XP)
-        members_table = database["members"]
+        members_table = database[config.DATABASE_TABLE_XP]
         members_table.insert({
             "id": member.id,
             "name": member.name,
             "xp": 0,
         }, pk="id", ignore=True)
+
+        # Add Role Client de passage to new member
+        role_id = config.ROLE_CLIENT_DE_PASSAGE_ID
+
+        role: discord.Role = guild.get_role(role_id)
+
+        await member.add_roles(role)
+        if guild.system_channel is not None:
+            to_send = f" Un nouveau client **{member.mention}** vient d'entrer dans le café!  "
+            await guild.system_channel.send(to_send)
 
     async def on_member_remove(self, member: discord.Member):
         # Uncheck reactions dans le channel La Carte
@@ -230,7 +233,7 @@ en réagissant au message dans le channel {la_carte.mention}, tu auras ainsi acc
         # Add points for the member reaction
         ranking.add_point_to(member, config.XP_REACTION)
 
-        # Set Role for Themes choosed
+        # Set Role for Themes chose
         if msg_id == config.MESSAGE_CHOOSE_THEMES_ID:
 
             partial_emoji = raw_reaction.emoji
@@ -260,14 +263,6 @@ en réagissant au message dans le channel {la_carte.mention}, tu auras ainsi acc
                 await rules_msg.clear_reaction(partial_emoji)
                 return
 
-            role_id = config.ROLE_CLIENT_DE_PASSAGE_ID
-
-            role: discord.Role = guild.get_role(role_id)
-
-            await member.add_roles(role)
-            if guild.system_channel is not None:
-                to_send = f" Un nouveau client **{member.mention}** vient d'entrer dans le café!  "
-                await guild.system_channel.send(to_send)
 
     async def on_raw_reaction_remove(self,
                                   raw_reaction: discord.RawReactionActionEvent):
